@@ -1,5 +1,4 @@
 #!/usr/local/bin/julia 
-push!(LOAD_PATH, "K:/3dp/")
 
 using Mesh
 
