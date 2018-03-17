@@ -8,6 +8,45 @@ struct Vertex
 	z::Float32
 end
 
+import Base.+
+function +(a::Vertex, b::Vertex)
+	Vertex(a.x+b.x, a.y+b.y, a.z+b.z)
+end
+
+import Base.-
+function -(a::Vertex, b::Vertex)
+	Vertex(a.x-b.x, a.y-b.y, a.z-b.z)
+end
+
+import Base./
+function /(a::Vertex, s::Real)
+	Vertex(a.x/s, a.y/s, a.z/s)
+end
+ 
+import Base.*
+function *(a::Vertex, s::Real)
+	Vertex(a.x*s, a.y*s, a.z*s)
+end
+function *(s::Real, a::Vertex)
+	Vertex(a.x*s, a.y*s, a.z*s)
+end
+
+import Base.LinAlg.vecdot
+function vecdot(v1::Vertex, v2::Vertex)
+	vecdot([v1.x, v1.y, v1.z], [v2.x, v2.y, v2.z])
+end
+
+import Base.LinAlg.cross
+function cross(v1::Vertex, v2::Vertex)
+	cross([v1.x, v1.y, v1.z], [v2.x, v2.y, v2.z])
+end
+
+ import Base.LinAlg.normalize
+ function normalize(v::Vertex)
+       n = normalize([v.x, v.y, v.z])
+       Vertex(n[1], n[2], n[3])
+ end
+
 struct Edge
 	From::Vertex
 	To::Vertex
