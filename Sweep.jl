@@ -1,5 +1,9 @@
 #!/usr/local/bin/julia 
 
+if ENV["OS"] == "Windows_NT"
+	push!(LOAD_PATH, "K:/3dp/3dprinting")
+end
+
 using Mesh
 
 n = Net()
@@ -28,6 +32,7 @@ end
 function arc(t::Real)
 	#Vertex(30t,120t^2,80t)
 	Vertex(20 * sin(2pi*t), 20 * cos(2pi*t),80t)
+	Vertex(30t, 20t, 30t)
 end
 
 function dist2D(v1::Vertex, v2::Vertex)
@@ -115,8 +120,14 @@ function vase()
 	solid(n, 3, z -> slice2d(2pi/5, r, z))
 end
 
+
+
+function sqr(path::Vertex)
+	[(-1,-1), (1,-1), (1,1), (-1,1), ]
+end
+
 function sweep()
-	solid(n, 13, arc, trang)
+	solid(n, 3, arc, sqr)
 	STL_ASCII(n, "sweep.stl")
 	println("Swept")
 end

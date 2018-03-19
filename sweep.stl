@@ -1,0 +1,98 @@
+solid Mesh.jl
+facet normal 0 0 0
+	outer loop
+		vertex 1.398376e+01 9.167950e+00 1.552436e+01
+		vertex 1.490684e+01 1.083205e+01 1.613974e+01
+		vertex -9.316173e-02 8.320503e-01 1.139743e+00
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex 1.398376e+01 9.167950e+00 1.552436e+01
+		vertex -1.016239e+00 -8.320503e-01 5.243580e-01
+		vertex -9.316173e-02 8.320503e-01 1.139743e+00
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex 1.509316e+01 9.167950e+00 1.386026e+01
+		vertex 1.398376e+01 9.167950e+00 1.552436e+01
+		vertex -1.016239e+00 -8.320503e-01 5.243580e-01
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex -1.016239e+00 -8.320503e-01 5.243580e-01
+		vertex 9.316173e-02 -8.320503e-01 -1.139743e+00
+		vertex 1.509316e+01 9.167950e+00 1.386026e+01
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex 1.601624e+01 1.083205e+01 1.447564e+01
+		vertex 1.509316e+01 9.167950e+00 1.386026e+01
+		vertex 9.316173e-02 -8.320503e-01 -1.139743e+00
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex 9.316173e-02 -8.320503e-01 -1.139743e+00
+		vertex 1.016239e+00 8.320503e-01 -5.243580e-01
+		vertex 1.601624e+01 1.083205e+01 1.447564e+01
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex 1.490684e+01 1.083205e+01 1.613974e+01
+		vertex 1.601624e+01 1.083205e+01 1.447564e+01
+		vertex 1.016239e+00 8.320503e-01 -5.243580e-01
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex 1.016239e+00 8.320503e-01 -5.243580e-01
+		vertex -9.316173e-02 8.320503e-01 1.139743e+00
+		vertex 1.490684e+01 1.083205e+01 1.613974e+01
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex 2.898376e+01 1.916795e+01 3.052436e+01
+		vertex 2.990684e+01 2.083205e+01 3.113974e+01
+		vertex 1.490684e+01 1.083205e+01 1.613974e+01
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex 2.898376e+01 1.916795e+01 3.052436e+01
+		vertex 1.398376e+01 9.167950e+00 1.552436e+01
+		vertex 1.490684e+01 1.083205e+01 1.613974e+01
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex 3.009316e+01 1.916795e+01 2.886026e+01
+		vertex 2.898376e+01 1.916795e+01 3.052436e+01
+		vertex 1.398376e+01 9.167950e+00 1.552436e+01
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex 1.398376e+01 9.167950e+00 1.552436e+01
+		vertex 1.509316e+01 9.167950e+00 1.386026e+01
+		vertex 3.009316e+01 1.916795e+01 2.886026e+01
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex 3.101624e+01 2.083205e+01 2.947564e+01
+		vertex 3.009316e+01 1.916795e+01 2.886026e+01
+		vertex 1.509316e+01 9.167950e+00 1.386026e+01
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex 1.509316e+01 9.167950e+00 1.386026e+01
+		vertex 1.601624e+01 1.083205e+01 1.447564e+01
+		vertex 3.101624e+01 2.083205e+01 2.947564e+01
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex 2.990684e+01 2.083205e+01 3.113974e+01
+		vertex 3.101624e+01 2.083205e+01 2.947564e+01
+		vertex 1.601624e+01 1.083205e+01 1.447564e+01
+endloop
+facet normal 0 0 0
+	outer loop
+		vertex 1.601624e+01 1.083205e+01 1.447564e+01
+		vertex 1.490684e+01 1.083205e+01 1.613974e+01
+		vertex 2.990684e+01 2.083205e+01 3.113974e+01
+endloop
+endsolid Mesh.jl
