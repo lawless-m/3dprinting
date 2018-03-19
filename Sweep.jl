@@ -18,54 +18,87 @@ function p(n, v)
 end
 
 function trang(path::Vertex)
-[(1,2), (2,1.6), (3,1.75), (3.5, 2), (4,2.2), (5,2), (6,1), (7,0.2), (8, 0.2), (9, 0.8), (9.3, 1), (10, 1.6), (10.3, 2), (10.7, 3), (10.8, 4), (10.9,5), (10.7, 6), (10.5, 7), (10,7.2), (9,7.3), (8, 7.1), (7.8, 7), (7.3, 6), (7,5.8), (6.4, 5), (6,4.75), (5,4), (4,4.5), (3.5, 5), (3.2, 6), (3,6.3), (2.3,7), (2,7.01), (1,6), (0.7, 5), (0.5,4), (0.6, 3)]
+	[(1,2), (2,1.6), (3,1.75), (3.5, 2), (4,2.2), (5,2), (6,1), (7,0.2), (8, 0.2), (9, 0.8), (9.3, 1), (10, 1.6), (10.3, 2), (10.7, 3), (10.8, 4), (10.9,5), (10.7, 6), (10.5, 7), (10,7.2), (9,7.3), (8, 7.1), (7.8, 7), (7.3, 6), (7,5.8), (6.4, 5), (6,4.75), (5,4), (4,4.5), (3.5, 5), (3.2, 6), (3,6.3), (2.3,7), (2,7.01), (1,6), (0.7, 5), (0.5,4), (0.6, 3)]
+end
+
+function normalizer(pts)
+	map(t->normalize([t[1], t[2]]), pts)
 end
 
 function arc(t::Real)
 	#Vertex(30t,120t^2,80t)
-	Vertex(2t,2t,0)
+	Vertex(20 * sin(2pi*t), 20 * cos(2pi*t),80t)
 end
 
-function normal(t::Real, tstep::Real, farc)
+function dist2D(v1::Vertex, v2::Vertex)
+	v = v2 - v1
+	sqrt(v.x^2+v.y^2)
+end
+
+function distance_angle_table_2D(pts)
+	dst = Matrix{Float64}(length(pts), length(pts))
+	a = Matrix{Float64}(length(pts), length(pts))
+	for i in 1:length(pts)
+		dst[i,i] = Inf
+		a[i,i] = 0
+		for j in i+1:length(pts)
+			v1 = Vertex(pts[i][1], pts[i][2], 0)
+			v2 = Vertex(pts[j][1], pts[j][2], 0)
+			d = dist2D(v1, v2)
+			v1 = normalize(v1)
+			v2 = normalize(v2)
+			dst[i, j] = d
+			a[i,j] = angle2D(v1, v2)
+			dst[j, i] = d
+			a[j,i] = -a[i,j]
+		end
+	end
+	(dst, a)
+end
+
+function nearest(i, dsts)
+	print(findmin(dsts[i,:]))
+end
+
+function normal(t::Real, tstep::Real, fpath)
 	t1 = arc(t)
 	if t == 0.0
-		t0 = arc(t)
+		t0 = fpath(t)
 	else
-		t0 = arc(t - tstep)
+		t0 = fpath(t - tstep)
 	end
 	
 	if t >= 1.0
-		t2 = arc(1.0)
+		t2 = fpath(1.0)
 	else
-		t2 = arc(t + tstep)
+		t2 = fpath(t + tstep)
 	end
 		
 	t01 = t1 - t0
 	t12 = t2 - t1
-	normalize(0.5*(t01 + t12))
+	normalize(t01 + t12)
 end
 
-function solid(n::Net, slices::Real, slicer) 	
-	for t in 0.0:1/(slices-1):1.0
-		path = arc(t)
+function solid(n::Net, slices::Real, fpath, slicer) 
+	tstep = 1/(slices-1)
+	for t in 0.0:tstep:1.0
+		path = fpath(t)
 		pathv = vertex!(n, path)
 		ve = pathv
 		pts = slicer(path)
 		steps = length(pts)
+		nom = normal(t, tstep, arc)
+		aXYZ = angleXYZ(nom)
 		for (x,y) in pts
-			ve = vertex!(n, path.x+x, path.y+y, path.z)
+			v = rotate(x, y, 0, aXYZ.x, aXYZ.y, 0)
+			ve = vertex!(n, v + path)
 		end
 		
-		#= cap
-		if path.z < zstp || path.z > 300 - zstp
-			face!(n, pathv, pathv+steps, pathv+1)
-			for v in pathv+2:pathv+steps
-				face!(n, pathv, v-1, v)
-			end
-		end
-		=#
-	
-		if t > 0.0
+		#= 
+			CAP
+		=# 
+
+		if t > 0
 			face!(n, pathv+1, pathv+steps, pathv-1)
 			face!(n, pathv+1, pathv-steps, pathv-1)
 			for s in 1:steps-1
@@ -76,12 +109,81 @@ function solid(n::Net, slices::Real, slicer)
 	end
 end	
 
-r = 30.0
+function vase()
+	r = 30.0
+	# kind of partial application
+	solid(n, 3, z -> slice2d(2pi/5, r, z))
+end
 
-# solid(n, 3, z -> slice2d(2pi/5, r, z))
-#solid(n, 13, trang)
-#STL_ASCII(n, "sweep.stl")
+function sweep()
+	solid(n, 13, arc, trang)
+	STL_ASCII(n, "sweep.stl")
+	println("Swept")
+end
 
-println(normal(0,0.5,arc))
+function capping()	
+	
+# d = distance_angle_table_2D(trang(Vertex(0,0,0)))
+
+	tri = [(1,1), (3,1), (1, 2)]
+	
+	(d,a) = distance_angle_table_2D(tri)
+	
+	println(d)
+	println(map(rad2deg, a))
+	
+	for i in 1:size(d,1)
+		@printf("i = %d\n", i)
+		for j in 1:size(d,1)
+			@printf("\t%02d = (%0.2f, %0.2f)\n", j, d[i,j], rad2deg(a[i,j]))
+		end
+		@printf("\n")
+	end
+	
+	println(findmin(d[1,2:3]))
+	
+	k = 0
+	while k <= size(d, 1)
+		(dd, k) = findmin(d[1,k+1:size(d,1)])
+		@printf("1 to %d d:%0.2f a:%0.2f\n", k, d[k], rad2deg(a[k]))
+		if a[k] < 0
+			break
+		end
+	end
+	
+	#nearest(3, d)
+
+end
+
+function rotpath()
+
+#=
+	n = normal(0.3, 0.1, arc)
+
+	println(n)
+	xa = angleX(n)
+	ya = angleY(n)
+	za = angleZ(n)
+	@printf("xa: %0.2f, ya: %0.2f, za: %0.2f\n\n", rad2deg(xa), rad2deg(ya), rad2deg(za))
+=#
+
+	n = Vertex(1,1,0)
+	println(n)
+	xa = angleX(n)
+	ya = angleY(n)
+	za = angleZ(n)
+	@printf("xa: %0.2f, ya: %0.2f, za: %0.2f\n\n", rad2deg(xa), rad2deg(ya), rad2deg(za))
 
 
+	n = rotate(n, xa, ya, 0)
+	println(n)
+	xa = angleX(n)
+	ya = angleY(n)
+	za = angleZ(n)
+	@printf("xa: %0.2f, ya: %0.2f, za: %0.2f\n", rad2deg(xa), rad2deg(ya), rad2deg(za))
+
+
+end
+
+
+sweep()

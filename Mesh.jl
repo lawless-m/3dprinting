@@ -1,12 +1,18 @@
 module Mesh
 
-export Vertex, Edge, Face, Net, vertex!, face!, STL_ASCII, STL
+export Vertex, angleX, angleZ, angleY, angleXYZ, rotate, Edge, Face, Net, vertex!, face!, STL_ASCII, STL
 
 struct Vertex
 	x::Float32
 	y::Float32
 	z::Float32
 end
+
+import Base.show
+function show(io::IO,v::Vertex)
+       @printf(io,"Vertex(%0.4f, %0.4f, %0.4f)", v.x, v.y, v.z)
+end
+
 
 import Base.+
 function +(a::Vertex, b::Vertex)
@@ -46,6 +52,62 @@ end
        n = normalize([v.x, v.y, v.z])
        Vertex(n[1], n[2], n[3])
  end
+
+function angleXY(v1::Vertex, v2::Vertex)
+	a = atan2(v2.y,v2.x) - atan2(v1.y,v1.x)
+	if isnan(a)
+		0.0
+	else
+		a
+	end
+end
+
+
+function angleY(v::Vertex)
+	if v.y == v.x == 0
+		0.0
+	else
+		atan2(v.x, v.y)
+	end
+end
+
+
+function angleX(v::Vertex)
+	if v.y == v.x == 0
+		0.0
+	else
+		atan2(v.y, v.x)
+	end
+end
+
+function angleZ(v::Vertex)
+	if v.x == v.z == 0
+		0.0
+	else
+		atan2(v.x, v.z)
+	end
+end
+
+function angleXYZ(v::Vertex)
+	Vertex(angleX(v), angleY(v), angleZ(v))
+end
+
+function rotate(v::Vertex, xa, ya, za)
+	if xa > 0
+		v = Vertex(v.x, v.y * cos(xa) - v.z * sin(xa), v.y * sin(xa) + v.z * cos(xa))
+	end
+	if ya > 0
+		v = Vertex(v.z * sin(ya) + v.x * cos(ya), v.y, v.z * cos(ya) - v.x * sin(ya))
+	end
+	if za > 0
+		v = Vertex(v.x * cos(za) - v.y * sin(za), v.x * sin(za) + y * cos(ya), v.z)
+	end
+	v
+end
+
+function rotate(x::Real, y::Real, z::Real, xa::Real, ya::Real, za::Real)
+	rotate(Vertex(x,y,z), xa, ya, za)
+end
 
 struct Edge
 	From::Vertex
