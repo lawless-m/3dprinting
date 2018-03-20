@@ -1,6 +1,6 @@
 #!/usr/local/bin/julia 
 
-if ENV["OS"] == "Windows_NT"
+if get(ENV, "OS", "") == "Windows_NT"
 	push!(LOAD_PATH, "K:/3dp/3dprinting")
 end
 
