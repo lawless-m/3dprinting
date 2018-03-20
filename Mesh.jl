@@ -1,6 +1,6 @@
 module Mesh
 
-export Vertex, angleX, angleZ, angleY, angleXYZ, rotate, Edge, Face, Net, vertex!, face!, STL_ASCII, STL
+export Vertex, angleXY, angleYX, angleYZ, angleZY, angleXZ, angleZX , rotate, Edge, Face, Net, vertex!, face!, STL_ASCII, STL
 
 struct Vertex
 	x::Float32
@@ -53,43 +53,43 @@ end
        Vertex(n[1], n[2], n[3])
  end
 
-function angleXY(v1::Vertex, v2::Vertex)
-	a = atan2(v2.y,v2.x) - atan2(v1.y,v1.x)
-	if isnan(a)
+function angle(x,y) 
+	# atan2(y,x) - take point (x,y) - angle from x axis to point
+	if x == y == 0
 		0.0
 	else
-		a
+		atan2(y,x)
 	end
 end
 
-
-function angleY(v::Vertex)
-	if v.y == v.x == 0
-		0.0
-	else
-		atan2(v.y, v.x)
-	end
+function angleXY(v::Vertex)
+	# project onto plane XY, angle from X axis to point		
+	angle(v.x, v.y)
 end
 
-
-function angleX(v::Vertex)
-	if v.y == v.x == 0
-		0.0
-	else
-		atan2(v.y, v.x)
-	end
+function angleYX(v::Vertex)
+	# project onto plane XY, angle from Y axis to point		
+	angle(v.y, v.x)
 end
 
-function angleZ(v::Vertex)
-	if v.x == v.z == 0
-		0.0
-	else
-		atan2(v.x, v.z)
-	end
+function angleYZ(v::Vertex)
+	# project onto plane YZ, angle from Y axis to point
+	angle(v.y, v.z)
 end
 
-function angleXYZ(v::Vertex)
-	Vertex(angleX(v), angleY(v), angleZ(v))
+function angleZY(v::Vertex)
+	# project onto plane YZ, angle from Z axis to point
+	angle(v.z, v.y)
+end
+
+function angleXZ(v::Vertex)
+	# project onto plane XZ, angle from X axis to point
+	angle(v.x, v.z)
+end
+
+function angleZX(v::Vertex)
+	# project onto plane XZ, angle from Z axis to point
+	angle(v.z, v.x)
 end
 
 function rotate(v::Vertex, a::Vertex)
@@ -107,6 +107,14 @@ end
 
 function rotate(x::Real, y::Real, z::Real, xa::Real, ya::Real, za::Real)
 	rotate(Vertex(x,y,z), Vertex(xa, ya, za))
+end
+
+function rotate(v::Vertex, xa::Real, ya::Real, za::Real)
+	rotate(v, Vertex(xa, ya, za))
+end
+
+function rotate(x::Real, y::Real, z::Real, v::Vertex)
+	rotate(Vertex(x,y,z), v)
 end
 
 struct Edge
