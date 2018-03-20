@@ -30,9 +30,7 @@ function normalizer(pts)
 end
 
 function arc(t::Real)
-	#Vertex(30t,120t^2,80t)
-	Vertex(20 * sin(2pi*t), 20 * cos(2pi*t),80t)
-	Vertex(30t, 20t, 30t)
+	Vertex(20 - 20 * cos(2pi*t), 0, 20 * sin(2pi*t))
 end
 
 function dist2D(v1::Vertex, v2::Vertex)
@@ -66,22 +64,10 @@ function nearest(i, dsts)
 end
 
 function normal(t::Real, tstep::Real, fpath)
-	t1 = arc(t)
-	if t == 0.0
-		t0 = fpath(t)
-	else
-		t0 = fpath(t - tstep)
-	end
-	
-	if t >= 1.0
-		t2 = fpath(1.0)
-	else
-		t2 = fpath(t + tstep)
-	end
-		
-	t01 = t1 - t0
-	t12 = t2 - t1
-	normalize(t01 + t12)
+	t0 = fpath(t - tstep)
+	t1 = fpath(t)
+	t2 = fpath(t + tstep)
+	normalize((t1 - t0) + (t2 - t1))
 end
 
 function solid(n::Net, slices::Real, fpath, slicer) 
@@ -90,12 +76,12 @@ function solid(n::Net, slices::Real, fpath, slicer)
 		path = fpath(t)
 		pathv = vertex!(n, path)
 		ve = pathv
-		pts = slicer(path)
-		steps = length(pts)
+		slicepts, slicectr, slicenorm = slicer(path) 
+		steps = length(slicepts)
 		nom = normal(t, tstep, arc)
-		aXYZ = angleXYZ(nom)
-		for (x,y) in pts
-			v = rotate(x, y, 0, aXYZ.x, aXYZ.y, 0)
+		ay = angleZX(nom)
+		for (x,y) in slicepts
+			v = rotate(x, y, 0, 0, ay, 0)
 			ve = vertex!(n, v + path)
 		end
 		
@@ -123,11 +109,11 @@ end
 
 
 function sqr(path::Vertex)
-	[(-1,-1), (1,-1), (1,1), (-1,1), ]
+	[(-1,-1), (1,-1), (1,1), (-1,1), ], Vertex(0.,0.,0.), Vertex(0.,0.,1)
 end
 
 function sweep()
-	solid(n, 3, arc, sqr)
+	solid(n, 9., arc, sqr)
 	STL_ASCII(n, "sweep.stl")
 	println("Swept")
 end
@@ -196,5 +182,19 @@ function rotpath()
 
 end
 
-
 sweep()
+
+tstep = 1/(9-1)
+t = 0
+for k = 1:3
+	a = arc(t)
+	n = normal(t, tstep, arc)
+
+	ay= angleZX(n)
+
+	@printf("arc: %s norm: %s angles: %d\n", a, n, rad2deg(ay))
+	r = rotate(1,1,0, Vertex(0, ay, 0))
+	println(r)
+	t += tstep
+end
+
