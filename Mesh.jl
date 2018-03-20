@@ -67,7 +67,7 @@ function angleY(v::Vertex)
 	if v.y == v.x == 0
 		0.0
 	else
-		atan2(v.x, v.y)
+		atan2(v.y, v.x)
 	end
 end
 
@@ -92,21 +92,21 @@ function angleXYZ(v::Vertex)
 	Vertex(angleX(v), angleY(v), angleZ(v))
 end
 
-function rotate(v::Vertex, xa, ya, za)
-	if xa > 0
-		v = Vertex(v.x, v.y * cos(xa) - v.z * sin(xa), v.y * sin(xa) + v.z * cos(xa))
+function rotate(v::Vertex, a::Vertex)
+	if a.x > 0
+		v = Vertex(v.x, v.y * cos(a.x) - v.z * sin(a.x), v.y * sin(a.x) + v.z * cos(a.x))
 	end
-	if ya > 0
-		v = Vertex(v.z * sin(ya) + v.x * cos(ya), v.y, v.z * cos(ya) - v.x * sin(ya))
+	if a.y > 0
+		v = Vertex(v.z * sin(a.y) + v.x * cos(a.y), v.y, v.z * cos(a.y) - v.x * sin(a.y))
 	end
-	if za > 0
-		v = Vertex(v.x * cos(za) - v.y * sin(za), v.x * sin(za) + y * cos(ya), v.z)
+	if a.z > 0
+		v = Vertex(v.x * cos(a.z) - v.y * sin(a.z), v.x * sin(a.z) + v.y * cos(a.z), v.z)
 	end
 	v
 end
 
 function rotate(x::Real, y::Real, z::Real, xa::Real, ya::Real, za::Real)
-	rotate(Vertex(x,y,z), xa, ya, za)
+	rotate(Vertex(x,y,z), Vertex(xa, ya, za))
 end
 
 struct Edge
