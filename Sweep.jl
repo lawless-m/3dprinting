@@ -78,5 +78,22 @@ function sweep(steps)
 	println("Swept")
 end
 
+using SVG
+function arcsvg(fname, tstep)
+	s = open(fname, "w+")
+	pts = Vector{Tuple{Real,Real}}()
+	for t=0:tstep:1
+		v = arc(t)
+		push!(pts, (100+v.x, 100+v.z))
+	end
+	SVG.open(s, 500.,500.)
+	SVG.polyline(s, pts, SVG.blackline(3.))
+	SVG.close(s)
+end
 
-sweep(9)
+arcsvg("t.svg", 1/100)
+
+		
+#  sweep(9)
+
+
