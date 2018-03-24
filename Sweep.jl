@@ -6,6 +6,7 @@ end
 
 using Mesh
 
+
 n = Net()
 
 function p(n, v)
@@ -27,10 +28,11 @@ function normal(t::Real, tstep::Real, fpath)
 	normalize((t1 - t0) + (t2 - t1))
 end
 
-function solid(n::Net, slices::Real, fpath, slicer) 
+function solid(origin::Vertex, n::Net, slices::Real, fpath, slicer)
+	path = Vertex(0,0,0) # to return end point
 	tstep = 1/(slices-1)
 	for t in 0.0:tstep:1.0
-		path = fpath(t)
+		path = origin + fpath(t)
 		pathv = vertex!(n, path)
 		ve = pathv
 		ppts, pnom = slicer(path) 
@@ -49,7 +51,7 @@ function solid(n::Net, slices::Real, fpath, slicer)
 		pax = angleYZ(pnom)
 		@printf("t: %0.2f  ax:%d pax:%d ay:%d pay:%d\n\n", t, rad2deg(ax), rad2deg(pax), rad2deg(ay), rad2deg(pay))
 		for (x,y) in ppts
-			v = rotate(Vertex(x, y, 0), Vertex(ax, ay, 0.))
+			v = rotate(Vertex(x, y, 0), Vertex(0., ay, 0.))
 			ve = vertex!(n, v + path)
 		end
 		
@@ -66,34 +68,76 @@ function solid(n::Net, slices::Real, fpath, slicer)
 			end
 		end
 	end
+	path
 end	
 
 function sqr(path::Vertex)
 	[(-1,-1), (1,-1), (1,1), (-1,1), ], Vertex(0,0,1)
 end
 
-function sweep(steps)
-	solid(n, steps, arc, sqr)
-	STL_ASCII(n, "sweep.stl")
+function sweep(steps, multiples=1)
+	o = Vertex(0,0,0)
+	for k in 1:multiples
+		o = solid(o, n, steps, stockp, sqr)
+	end
+	println(STDERR, o)
+	STL_ASCII(n, "stk.stl")
 	println("Swept")
 end
 
+
+function stockp(t::Float64)
+	r = 10
+	x = y = z = 0.0
+	function q1(u)
+		r+r*cos(pi - pi*u), r*sin(pi - pi*u)
+	end
+	function q2(u)
+		x1,z1 = q1(1.)
+		x1 - 0.5 * r * u, z1 -r * u
+	end
+	function q3(u)
+		x2,z2 = q2(1.)
+		x2 + r + r*cos(pi - pi*u), z2 + r*-sin(pi - pi*u)
+	end
+	function q4(u)
+		x3, z3 = q3(1.)
+		x3 - 0.5r*u, z3 + r*u
+	end
+		
+	
+	if t < 0.25
+		x,z = q1(4t)
+	elseif t < 0.5
+		x,z = q2(4*(t-0.25))
+	elseif t < 0.75
+		x,z = q3(4*(t-0.5))
+	else
+		x,z = q4(4*(t-0.75))
+	end
+	z = -z
+
+	Vertex(x,y,z)
+end
+
 using SVG
-function arcsvg(fname, tstep)
+function pathsvg(fname, tstep, fpath)
 	s = open(fname, "w+")
 	pts = Vector{Tuple{Real,Real}}()
-	for t=0:tstep:1
-		v = arc(t)
-		push!(pts, (100+v.x, 100+v.z))
+	st = fpath(1.)
+	for stch = 0:10
+		for t=0:tstep:1
+			v = fpath(t)
+			push!(pts, (stch*st.x+v.x, stch*st.z+v.z))
+		end
 	end
 	SVG.open(s, 500.,500.)
 	SVG.polyline(s, pts, SVG.blackline(3.))
 	SVG.close(s)
 end
 
-arcsvg("t.svg", 1/100)
-
+pathsvg("stk.svg", 1/40, stockp)
 		
-#  sweep(9)
+sweep(900, 10)
 
 
