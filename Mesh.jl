@@ -1,6 +1,6 @@
 module Mesh
 
-export Vertex, angleXY, angleYX, angleYZ, angleZY, angleXZ, angleZX , rotate, Edge, Face, Net, vertex!, face!, STL_ASCII, STL
+export Vertex, angleXY, angleYX, angleYZ, angleZY, angleXZ, angleZX, rotate, translate, transformVerts, Edge, Face, Net, vertex!, face!, STL_ASCII, STL
 
 struct Vertex
 	x::Float32
@@ -93,13 +93,13 @@ function angleZX(v::Vertex)
 end
 
 function rotate(v::Vertex, a::Vertex)
-	if a.x > 0
+	if abs(a.x) > 0
 		v = Vertex(v.x, v.y * cos(a.x) - v.z * sin(a.x), v.y * sin(a.x) + v.z * cos(a.x))
 	end
-	if a.y > 0
+	if abs(a.y) > 0
 		v = Vertex(v.z * sin(a.y) + v.x * cos(a.y), v.y, v.z * cos(a.y) - v.x * sin(a.y))
 	end
-	if a.z > 0
+	if abs(a.z) > 0
 		v = Vertex(v.x * cos(a.z) - v.y * sin(a.z), v.x * sin(a.z) + v.y * cos(a.z), v.z)
 	end
 	v
@@ -117,9 +117,14 @@ function rotate(x::Real, y::Real, z::Real, v::Vertex)
 	rotate(Vertex(x,y,z), v)
 end
 
+function translate(v::Vertex, t::Vertex)
+	v+t
+end
+
+
 struct Edge
-	From::Vertex
-	To::Vertex
+	From::Integer
+	To::Integer
 end
 
 struct Face
@@ -149,8 +154,13 @@ function vertex!(n::Net, v::Vertex)
 end
 
 function face!(n::Net, v1::Integer, v2::Integer, v3::Integer)
-	push!(n.Faces, Face(Edge(n.Vertices[v1], n.Vertices[v2]), Edge(n.Vertices[v2], n.Vertices[v3]), Edge(n.Vertices[v3], n.Vertices[v1])))
+	push!(n.Faces, Face(Edge(v1, v2), Edge(v2, v3), Edge(v3, v1)))
 end
+
+function transformVerts(n::Net, f, vs::Integer, ve::Integer)
+	n.Vertices[vs:ve] = map(f, n.Vertices[vs:ve])
+end
+
 
 function STL_ASCII(n::Net)
 	STL_ASCII(n, STDOUT)
@@ -165,7 +175,10 @@ end
 function STL_ASCII(n::Net, io::IO)
 	println(io, "solid Mesh.jl")
 	for f in n.Faces
-		@printf(io, "facet normal 0 0 0\n\touter loop\n\t\tvertex %e %e %e\n\t\tvertex %e %e %e\n\t\tvertex %e %e %e\nendloop\n", f.AB.From.x, f.AB.From.y, f.AB.From.z, f.AB.To.x, f.AB.To.y, f.AB.To.z, f.BC.To.x, f.BC.To.y, f.BC.To.z)
+		abf = n.Vertices[f.AB.From]
+		abt = n.Vertices[f.AB.To]
+		bct = n.Vertices[f.BC.To]
+		@printf(io, "facet normal 0 0 0\n\touter loop\n\t\tvertex %e %e %e\n\t\tvertex %e %e %e\n\t\tvertex %e %e %e\nendloop\n", abf.x, abf.y, abf.z, abt.x, abt.y, abt.z, bct.x, bct.y, bct.z)
 	end
 	println(io, "endsolid Mesh.jl")
 end

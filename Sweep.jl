@@ -6,12 +6,10 @@ end
 
 using Mesh
 
+debug = false
 
 n = Net()
 
-function p(n, v)
-	@printf("%s (%0.2f, %0.2f, %0.2f)\n", n, v.x, v.y, v.z)
-end
 
 function profile(path::Vertex)
 	[(1,2), (2,1.6), (3,1.75), (3.5, 2), (4,2.2), (5,2), (6,1), (7,0.2), (8, 0.2), (9, 0.8), (9.3, 1), (10, 1.6), (10.3, 2), (10.7, 3), (10.8, 4), (10.9,5), (10.7, 6), (10.5, 7), (10,7.2), (9,7.3), (8, 7.1), (7.8, 7), (7.3, 6), (7,5.8), (6.4, 5), (6,4.75), (5,4), (4,4.5), (3.5, 5), (3.2, 6), (3,6.3), (2.3,7), (2,7.01), (1,6), (0.7, 5), (0.5,4), (0.6, 3)], Vertex(0,0,1)
@@ -31,33 +29,47 @@ end
 function solid(origin::Vertex, n::Net, slices::Real, fpath, slicer)
 	path = Vertex(0,0,0) # to return end point
 	tstep = 1/(slices-1)
+	ve = 0
 	for t in 0.0:tstep:1.0
+
+		if debug @printf("\nT: %0.2f\n", t) end
+
 		path = origin + fpath(t)
 		pathv = vertex!(n, path)
-		ve = pathv
-		ppts, pnom = slicer(path) 
-		steps = length(ppts)
-		nom = normal(t, tstep, arc)
-		@printf("nom %s\n", nom)
-		@printf("pnom %s\n", pnom)
+		slicepts, slicenorm = slicer(path) 
+		steps = length(slicepts)
+		pathnorm = normal(t, tstep, fpath)
 
-		pay = angleZX(pnom)
-		ay = angleZX(nom)
-		if ay < 0
-			ay += 2pi
+
+		if debug @printf("pathnorm %s\n", pathnorm) end
+		if debug @printf("slicenorm %s\n", slicenorm) end
+
+		pathay = angleXZ(pathnorm)
+		sliceay = angleXZ(slicenorm)
+		if sliceay < 0
+			sliceay += 2pi
 		end
 
-		ax = angleYZ(nom)
-		pax = angleYZ(pnom)
-		@printf("t: %0.2f  ax:%d pax:%d ay:%d pay:%d\n\n", t, rad2deg(ax), rad2deg(pax), rad2deg(ay), rad2deg(pay))
-		for (x,y) in ppts
-			v = rotate(Vertex(x, y, 0), Vertex(0., ay, 0.))
+		pathax = angleYZ(pathnorm)
+		sliceax = angleYZ(slicenorm)
+
+		rot = Vertex(0., sliceay-pathay, 0.)
+
+		if debug @printf("pathax:%d sliceax:%d pathay:%d sliceay:%d\n", rad2deg(pathax), rad2deg(sliceax), rad2deg(pathay), rad2deg(sliceay)) end
+		if debug @printf("rotating x:%d y:%d z:%d\n", rad2deg(rot.x), rad2deg(rot.y), rad2deg(rot.z)) end
+
+		for (x,y) in slicepts
+			v = rotate(Vertex(x, y, 0), rot)
 			ve = vertex!(n, v + path)
 		end
-		
-		#= 
-			CAP
-		=# 
+
+
+if t < tstep || t >= 1.0
+	face!(n, pathv, pathv+steps, pathv+1)
+	for v in pathv+2:pathv+steps
+		face!(n, pathv, v-1, v)
+	end
+end
 
 		if t > 0
 			face!(n, pathv+1, pathv+steps, pathv-1)
@@ -68,22 +80,23 @@ function solid(origin::Vertex, n::Net, slices::Real, fpath, slicer)
 			end
 		end
 	end
-	path
+	path, ve
 end	
 
 function sqr(path::Vertex)
 	[(-1,-1), (1,-1), (1,1), (-1,1), ], Vertex(0,0,1)
 end
 
-function sweep(steps, multiples=1)
-	o = Vertex(0,0,0)
-	for k in 1:multiples
-		o = solid(o, n, steps, stockp, sqr)
+function circ(path::Vertex)
+	pts = Vector{Tuple{Real, Real}}()
+	r = 1.5
+	steps = 8
+	for a = 2pi/steps:2pi/steps:2pi
+		push!(pts, (r * sin(a), r * cos(a)))
 	end
-	println(STDERR, o)
-	STL_ASCII(n, "stk.stl")
-	println("Swept")
+	pts, Vertex(0,0,1)
 end
+
 
 
 function stockp(t::Float64)
@@ -104,9 +117,14 @@ function stockp(t::Float64)
 		x3, z3 = q3(1.)
 		x3 - 0.5r*u, z3 + r*u
 	end
-		
-	
-	if t < 0.25
+
+	if t < 0
+		x,z = q1(4*abs(t))
+		z = -z
+	elseif t > 1
+		x,z = q4(4*((2-t)-0.75))
+		z = -z
+	elseif t < 0.25
 		x,z = q1(4t)
 	elseif t < 0.5
 		x,z = q2(4*(t-0.25))
@@ -125,8 +143,8 @@ function pathsvg(fname, tstep, fpath)
 	s = open(fname, "w+")
 	pts = Vector{Tuple{Real,Real}}()
 	st = fpath(1.)
-	for stch = 0:10
-		for t=0:tstep:1
+	for stch = 1:1
+		for t=-tstep:tstep:1+tstep
 			v = fpath(t)
 			push!(pts, (stch*st.x+v.x, stch*st.z+v.z))
 		end
@@ -136,8 +154,38 @@ function pathsvg(fname, tstep, fpath)
 	SVG.close(s)
 end
 
-pathsvg("stk.svg", 1/40, stockp)
-		
-sweep(900, 10)
 
+pathsvg("stk.svg", 1/98, stockp)
+
+
+function sweep(n::Net, steps, multiples=1)
+	e = o = Vertex(0,0,0)
+	
+	for k in 1:multiples
+		o, e = solid(o, n, steps, stockp, circ)
+	end
+	o, e
+end
+
+function knit(n, stitches::Integer, rowpairs::Integer)
+	ty = 15
+	vs = 1
+	for rp = 1:rowpairs
+		pe, ve = sweep(n, 36, stitches)
+		transformVerts(n, v->rotate(v, Vertex(deg2rad(40), 0, 0)), vs, ve)
+		transformVerts(n, v->translate(v, Vertex(0,ty,0)), vs, ve)
+
+		vs = ve + 1
+		pe, ve = sweep(n, 36, stitches)
+		transformVerts(n, v->rotate(v, Vertex(deg2rad(-40), 0, 0)), vs, ve)
+		transformVerts(n, v->translate(v, Vertex(15,ty,0)), vs, ve)
+		vs = ve + 1
+		ty += 15
+	end
+
+	STL_ASCII(n, "stk.stl")
+end
+
+
+knit(n, 3, 2)
 
